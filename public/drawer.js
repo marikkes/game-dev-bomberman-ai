@@ -1,9 +1,9 @@
 import {
-  getBoard,
-  tileTypes,
-  getBombs,
-  getFires,
-  getPlayers,
+    getBoard,
+    getBombs,
+    getFires,
+    getPlayers,
+    getTileTypes,
 } from "./game-state.js";
 
 const canvas = document.getElementById("gameCanvas");
@@ -29,6 +29,7 @@ const fireImage = new Image();
 fireImage.src = "img/fire.png";
 
 function drawTile(pos, type) {
+  const tileTypes = getTileTypes();
   const playerColors = {
     1: "#ff0000",
     2: "#0000ff",
@@ -58,11 +59,7 @@ function drawTile(pos, type) {
 }
 
 export function draw(adjustment_factor) {
-  // fill background with img/grass.jpg
-
   ctx.drawImage(grass, 0, 0, canvas.width, canvas.height);
-  //ctx.fillStyle = "#000000";
-  //ctx.fillRect(0, 0, canvas.width, canvas.height);
   const board = getBoard();
   for (let i = 0; i < board.length; i++) {
     for (let j = 0; j < board[i].length; j++) {

@@ -1,4 +1,4 @@
-import { getActions, getBoard, getBombs, getFires } from "./game-state.js";
+import { getActionsInfo, getBoardInfo, getBombsInfo, getFiresInfo, getPlayersInfo, getTileTypesInfo } from "../ai-info-gate.js";
 
 var my_id;
 
@@ -10,10 +10,12 @@ export function makeAi(id) {
 }
 
 function get_action() {
-  const board = getBoard();
-  const actions = getActions();
-  const bombs = getBombs();
-  const fire = getFires();
+  const board = getBoardInfo();
+  const actions = getActionsInfo();
+  const bombs = getBombsInfo();
+  const fire = getFiresInfo();
+  const players = getPlayersInfo();
+  const tileTypes = getTileTypesInfo();
   // return random action
   const r = Math.floor(Math.random() * 5);
   switch (r) {

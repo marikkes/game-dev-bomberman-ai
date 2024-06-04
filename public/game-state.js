@@ -1,15 +1,19 @@
-import { makeAi } from "./my-ai.js";
 import { initHumanControls, isGametime } from "./setup.js";
 
-// matrix for a 10 by 10 grid
-const board = [];
-const size = 15;
-const rows = size;
-const cols = size;
+// config
+const BOARD_SIZE = 15;
+const FIRE_DURATION = 1000;
+const TIME_TO_EXPLODE = 3000;
+const BOARD_ROW_COUNT = BOARD_SIZE;
+const BOARD_COL_COUNT = BOARD_SIZE;
+const DEFAULT_BLAST_RANGE = 3;
 
-export function getBoard() {
-  return board;
-}
+var board = [];
+var players = [];
+var bombs = [];
+var fires = [];
+var actionQueue = [];
+export var playerActionQueued = false;
 
 export const tileTypes = {
   empty: 0,
@@ -21,14 +25,50 @@ export const tileTypes = {
   player4: 4,
 };
 
+const spawnPoints = [
+  { nr: 1, x: 0, y: 0 },
+  { nr: 2, x: BOARD_SIZE - 1, y: 0 },
+  { nr: 3, x: 0, y: BOARD_SIZE - 1 },
+  { nr: 4, x: BOARD_SIZE - 1, y: BOARD_SIZE - 1 },
+];
+
+export const actions = {
+  up: 0,
+  right: 1,
+  down: 2,
+  left: 3,
+  bomb: 4,
+  no_action: 5,
+};
+
+export function getBoard() {
+  return board;
+}
+
 export function getTileTypes() {
   return tileTypes;
 }
 
+export function getActions() {
+  return actions;
+}
+
+export function getPlayers() {
+  return players;
+}
+
+export function getBombs() {
+  return bombs;
+}
+
+export function getFires() {
+  return fires;
+}
+
 export function initBoard() {
-  for (let i = 0; i < rows; i++) {
+  for (let i = 0; i < BOARD_ROW_COUNT; i++) {
     board[i] = [];
-    for (let j = 0; j < cols; j++) {
+    for (let j = 0; j < BOARD_COL_COUNT; j++) {
       if ((i + j) % 2 === 1) {
         board[i][j] = tileTypes.wood;
       } else if (i % 2 === 1 && j % 2 === 1) {
@@ -41,46 +81,21 @@ export function initBoard() {
   for (let i = 1; i < 3; i++) {
     board[0][i] = tileTypes.empty;
     board[i][0] = tileTypes.empty;
-    board[0][size - 1 - i] = tileTypes.empty;
-    board[size - 1 - i][0] = tileTypes.empty;
-    board[i][size - 1] = tileTypes.empty;
-    board[size - 1][i] = tileTypes.empty;
-    board[size - 1 - i][size - 1] = tileTypes.empty;
-    board[size - 1][size - 1 - i] = tileTypes.empty;
+    board[0][BOARD_SIZE - 1 - i] = tileTypes.empty;
+    board[BOARD_SIZE - 1 - i][0] = tileTypes.empty;
+    board[i][BOARD_SIZE - 1] = tileTypes.empty;
+    board[BOARD_SIZE - 1][i] = tileTypes.empty;
+    board[BOARD_SIZE - 1 - i][BOARD_SIZE - 1] = tileTypes.empty;
+    board[BOARD_SIZE - 1][BOARD_SIZE - 1 - i] = tileTypes.empty;
   }
 }
 
-var players = [];
-var humansCount = 0;
-var aiCount = 0;
-
-export function getPlayers() {
-  return players;
-}
+export const getHumanId = () => {
+  return getPlayers().find((p) => p.isHuman)?.id;
+};
 
 export function resetAgents() {
   players = [];
-  humansCount = 0;
-  aiCount = 0;
-}
-
-const spawnPoints = [
-  { nr: 1, x: 0, y: 0 },
-  { nr: 2, x: size - 1, y: 0 },
-  { nr: 3, x: 0, y: size - 1 },
-  { nr: 4, x: size - 1, y: size - 1 },
-];
-
-export const actions = {
-  up: 0,
-  right: 1,
-  down: 2,
-  left: 3,
-  bomb: 4,
-};
-
-export function getActions() {
-  return actions;
 }
 
 function resolveAction(id, action) {
@@ -94,7 +109,7 @@ function resolveAction(id, action) {
       }
     } else if (action === actions.down) {
       if (
-        player.y < size - 1 &&
+        player.y < BOARD_SIZE - 1 &&
         board[player.y + 1][player.x] === tileTypes.empty
       ) {
         board[player.y][player.x] = tileTypes.empty;
@@ -109,7 +124,7 @@ function resolveAction(id, action) {
       }
     } else if (action === actions.right) {
       if (
-        player.x < size - 1 &&
+        player.x < BOARD_SIZE - 1 &&
         board[player.y][player.x + 1] === tileTypes.empty
       ) {
         board[player.y][player.x] = tileTypes.empty;
@@ -117,16 +132,13 @@ function resolveAction(id, action) {
         board[player.y][player.x] = id;
       }
     } else if (action === actions.bomb) {
-        if (player.cd < Date.now()) {
-            player.cd = Date.now() + 3000;
-            dropBomb(player);
-        }
+      if (player.cd < Date.now()) {
+        player.cd = Date.now() + 3000;
+        dropBomb(player);
+      }
     }
   }
 }
-
-var actionQueue = [];
-export var playerActionQueued = false;
 
 export function setPlayerActionQueued(value) {
   playerActionQueued = value;
@@ -161,72 +173,75 @@ function removeWalls() {
 
 function resolveDeath() {
   for (let player of players) {
-    for (let fire of fires) {
-      if (player.x === fire.x && player.y === fire.y) {
-        player.isAlive = false;
-        console.log("player " + player.id + " died");
+    if (player.isAlive) {
+      for (let fire of fires) {
+        if (player.x === fire.x && player.y === fire.y) {
+          player.isAlive = false;
+          board[player.y][player.x] = tileTypes.empty;
+          console.log(player.name + " died");
+        }
       }
     }
   }
 }
 
 export function getAiActions() {
-  const actions = [];
   for (let player of players) {
-    if (!player.isHuman && player.isAlive) {
+    if (!player.isHuman && player.isAlive && isGametime) {
       queueAction(player.id, player.agent.get_action());
     }
   }
 }
 
-export function populatePlayers() {
-  for (let i = 0; i < humansCount; i++) {
-    const { x, y, nr } = spawnPoints[i];
-    players.push({ x, y, isHuman: true, isAlive: true, id: nr, cd: Date.now()});
-    board[y][x] = nr;
+function importAi(name, id) {
+  return import(`./ais/${name}.js`).then((module) => {
+    return module.makeAi(id);
+  });
+}
+
+export const addPlayer = (isHuman, name = "") => {
+  if (players.length > spawnPoints.length) {
+    console.log("Maximum players added");
+    return;
   }
-  for (let i = 0; i < aiCount; i++) {
-    const { x, y, nr } = spawnPoints[humansCount + i];
+  const { x, y, nr } = spawnPoints[players.length];
+  if (isHuman && players.find((p) => p.isHuman)) {
+    console.log("Only one human can play ata a time");
+    return;
+  } else if (isHuman) {
+    initHumanControls();
     players.push({
       x,
       y,
-      isHuman: false,
+      isHuman: true,
       isAlive: true,
       id: nr,
-      agent: makeAi(nr),
-      cd: Date.now()
+      name: "Human",
+      cd: Date.now(),
     });
-    board[y][x] = nr;
-  }
-}
-
-export const addPlayer = (isHuman) => {
-  if (humansCount + aiCount > spawnPoints.length) {
-    return;
-  }
-  if (isHuman) {
-    humansCount++;
-    initHumanControls();
+    console.log("Human joined as player " + nr);
   } else {
-    aiCount++;
+    importAi(name, nr).then((ai) => {
+      players.push({
+        x,
+        y,
+        isHuman: false,
+        isAlive: true,
+        id: nr,
+        name: name + "Bot",
+        agent: ai,
+        cd: Date.now(),
+      });
+    });
+    console.log(name + "Bot joined as player " + nr);
   }
+  board[y][x] = nr;
 };
 
-var bombs = [];
-var fires = [];
-
-export function resetBnF() {
+export function resetBombsNFires() {
   bombs = [];
   fires = [];
   actionQueue = [];
-}
-
-export function getBombs() {
-  return bombs;
-}
-
-export function getFires() {
-  return fires;
 }
 
 export function removeFires() {
@@ -234,65 +249,98 @@ export function removeFires() {
   for (let fire of fires) {
     if (fire.duration > Date.now()) {
       still.push(fire);
-    } else {
-      console.log("fire removed");
     }
   }
   fires = still;
 }
 
 const resolveBombs = () => {
-  const still = [];
+  const remaining = [];
   for (let bomb of bombs) {
     if (bomb.explosion < Date.now()) {
       explodeBomb(bomb);
     } else {
-      still.push(bomb);
+      remaining.push(bomb);
     }
   }
-  bombs = still;
+  bombs = remaining;
 };
 
 function dropBomb(player) {
-  bombs.push({ x: player.x, y: player.y, explosion: Date.now() + 3000 });
+  bombs.push({
+    x: player.x,
+    y: player.y,
+    explosion: Date.now() + TIME_TO_EXPLODE,
+  });
 }
 
 export function explodeBomb(bomb) {
-  fires.push({ x: bomb.x, y: bomb.y, duration: Date.now() + 1000 });
-  for (let i = 1; i < 3; i++) {
-    if (bomb.x + i < size) {
-      if (board[bomb.y][bomb.x + i] < 6) {
-        fires.push({ x: bomb.x + i, y: bomb.y, duration: Date.now() + 1000 });
-      } else {
+  fires.push({ x: bomb.x, y: bomb.y, duration: Date.now() + FIRE_DURATION });
+  for (let i = 1; i < DEFAULT_BLAST_RANGE; i++) {
+    if (bomb.x + i < BOARD_SIZE) {
+      if (isStoppingFire(bomb.x + 1, bomb.y)) {
+        break;
+      }
+      fires.push({
+        x: bomb.x + i,
+        y: bomb.y,
+        duration: Date.now() + FIRE_DURATION,
+      });
+      if (isBurnAndStop(bomb.x + 1, bomb.y)) {
         break;
       }
     }
   }
-  for (let i = 1; i < 3; i++) {
+  for (let i = 1; i < DEFAULT_BLAST_RANGE; i++) {
     if (bomb.x - i >= 0) {
-      if (board[bomb.y][bomb.x - i] < 6) {
-        fires.push({ x: bomb.x - i, y: bomb.y, duration: Date.now() + 1000 });
-      } else {
+      if (isStoppingFire(bomb.x - 1, bomb.y)) {
+        break;
+      }
+      fires.push({
+        x: bomb.x - i,
+        y: bomb.y,
+        duration: Date.now() + FIRE_DURATION,
+      });
+      if (isBurnAndStop(bomb.x - 1, bomb.y)) {
         break;
       }
     }
   }
-  for (let i = 1; i < 3; i++) {
-    if (bomb.y + i < size) {
-      if (board[bomb.y + i][bomb.x] < 6) {
-        fires.push({ x: bomb.x, y: bomb.y + i, duration: Date.now() + 1000 });
-      } else {
+  for (let i = 1; i < DEFAULT_BLAST_RANGE; i++) {
+    if (bomb.y + i < BOARD_SIZE) {
+      if (isStoppingFire(bomb.x, bomb.y + i)) {
+        break;
+      }
+      fires.push({
+        x: bomb.x,
+        y: bomb.y + i,
+        duration: Date.now() + FIRE_DURATION,
+      });
+      if (isBurnAndStop(bomb.x, bomb.y + i)) {
         break;
       }
     }
   }
-  for (let i = 1; i < 3; i++) {
+  for (let i = 1; i < DEFAULT_BLAST_RANGE; i++) {
     if (bomb.y - i >= 0) {
-      if (board[bomb.y - i][bomb.x] < 6) {
-        fires.push({ x: bomb.x, y: bomb.y - i, duration: Date.now() + 1000 });
-      } else {
+      if (isStoppingFire(bomb.x, bomb.y - i)) {
+        break;
+      }
+      fires.push({
+        x: bomb.x,
+        y: bomb.y - i,
+        duration: Date.now() + FIRE_DURATION,
+      });
+      if (isBurnAndStop(bomb.x, bomb.y - i)) {
         break;
       }
     }
   }
+}
+function isStoppingFire(x, y) {
+  return board[y][x] === tileTypes.stone;
+}
+
+function isBurnAndStop(x, y) {
+  return board[y][x] === tileTypes.wood;
 }

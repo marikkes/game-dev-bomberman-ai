@@ -1,18 +1,23 @@
-import { actions, addPlayer, initBoard, playerActionQueued, populatePlayers, queueAction, resetAgents, resetBnF, setPlayerActionQueued } from "./game-state.js";
+import {
+    actions,
+    addPlayer,
+    getHumanId,
+    initBoard,
+    playerActionQueued,
+    queueAction,
+    resetAgents,
+    resetBombsNFires,
+    setPlayerActionQueued,
+} from "./game-state.js";
 
 export var isGametime = false;
+var isShowingAiNames = false;
 
 function initStartStop() {
   document.querySelector("#startStop").innerHTML = "Start";
   document.querySelector("#startStop").addEventListener("click", (e) => {
     isGametime = !isGametime;
-    if (isGametime) {
-        initBoard();
-        populatePlayers();
-      e.target.innerHTML = "Stop";
-    } else {
-      e.target.innerHTML = "Start";
-    }
+      e.target.innerHTML = isGametime ? "Stop" : "Start";
     e.preventDefault();
   });
 }
@@ -23,8 +28,8 @@ function initReset() {
     initBoard();
     resetAgents();
     document.querySelector("#startStop").innerHTML = "Start";
-    isGametime=false;
-    resetBnF();
+    isGametime = false;
+    resetBombsNFires();
   });
 }
 
@@ -36,28 +41,60 @@ function initPlayerButton() {
 }
 
 function initAiButton() {
-  document.querySelector("#ai").innerHTML = "Add AI";
+  document.querySelector("#ai").innerHTML = "Add a random AI";
   document.querySelector("#ai").addEventListener("click", () => {
-    addPlayer(false);
+    fetch("/ais")
+      .then((response) => response.json())
+      .then((aiNames) => {
+        addPlayer(false, aiNames[Math.floor(Math.random() * aiNames.length)]);
+      });
+  });
+}
+
+function initOptionsButton() {
+  document.querySelector("#options").innerHTML = "Show AI options";
+  document.querySelector("#options").addEventListener("click", () => {
+    isShowingAiNames = !isShowingAiNames;
+    if (isShowingAiNames) {
+      showAiNames();
+    } else {
+      document.querySelector("#aiNamesList").innerHTML = "";
+    }
   });
 }
 
 export function initHumanControls() {
-    document.onkeydown = ev => {
-        if (playerActionQueued) return;
-        if (ev.key=='ArrowLeft'){
-            queueAction(1, actions.left);
-        } else if (ev.key=='ArrowRight'){
-            queueAction(1, actions.right);
-        } else if (ev.key=='ArrowUp'){
-            queueAction(1, actions.up);
-        } else if (ev.key=='ArrowDown'){
-            queueAction(1, actions.down);
-        } else if (ev.key==' '){
-            queueAction(1, actions.bomb);
-        }
-        setPlayerActionQueued(true);
-    };
+  document.onkeydown = (ev) => {
+    if (playerActionQueued) return;
+    if (ev.key == "ArrowLeft") {
+      queueAction(getHumanId(), actions.left);
+    } else if (ev.key == "ArrowRight") {
+      queueAction(getHumanId(), actions.right);
+    } else if (ev.key == "ArrowUp") {
+      queueAction(getHumanId(), actions.up);
+    } else if (ev.key == "ArrowDown") {
+      queueAction(getHumanId(), actions.down);
+    } else if (ev.key == " ") {
+      queueAction(getHumanId(), actions.bomb);
+    }
+    setPlayerActionQueued(true);
+  };
+}
+
+function showAiNames() {
+  const aiList = document.querySelector("#aiNamesList");
+  fetch("/ais")
+    .then((response) => response.json())
+    .then((aiNames) => {
+      for (let name of aiNames) {
+        const p = document.createElement("button");
+        p.innerHTML = name;
+        p.onclick = () => {
+          addPlayer(false, name);
+        };
+        aiList.appendChild(p);
+      }
+    });
 }
 
 export function setUp() {
@@ -66,4 +103,5 @@ export function setUp() {
   initReset();
   initPlayerButton();
   initAiButton();
+  initOptionsButton();
 }

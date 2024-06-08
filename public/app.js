@@ -1,6 +1,7 @@
 import { draw } from './drawer.js';
 import { getAiActions, resolveActions } from './game-state.js';
 import { setUp } from './setup.js';
+import { printRankings } from './scoreboard.js';
 
 const TIME_PER_UPDATE = 160; 
 // const TIME_PER_UPDATE = 16;
@@ -18,6 +19,7 @@ function loop(time) {
         lag-=TIME_PER_UPDATE;
     }
     draw(lag/TIME_PER_UPDATE);
+    printRankings();
     window.requestAnimationFrame(loop);
     
 }

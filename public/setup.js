@@ -11,13 +11,23 @@ import {
 } from "./game-state.js";
 
 export var isGametime = false;
+export var startTime = Date.now();
 var isShowingAiNames = false;
+
+const startGame = () => {
+    isGametime = true;
+    startTime = Date.now();
+};
+
+const stopGame = () => {
+    isGametime = false;
+};
 
 function initStartStop() {
   document.querySelector("#startStop").innerHTML = "Start";
   document.querySelector("#startStop").addEventListener("click", (e) => {
-    isGametime = !isGametime;
-      e.target.innerHTML = isGametime ? "Stop" : "Start";
+    isGametime ? stopGame() : startGame();
+    e.target.innerHTML = isGametime ? "Stop" : "Start";
     e.preventDefault();
   });
 }
@@ -29,7 +39,7 @@ function initReset() {
     resetAgents();
     document.querySelector("#player").disabled = false;
     document.querySelector("#startStop").innerHTML = "Start";
-    isGametime = false;
+    stopGame();
     resetBombsNFires();
   });
 }

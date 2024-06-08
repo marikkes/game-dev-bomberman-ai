@@ -177,6 +177,7 @@ function resolveDeath() {
       for (let fire of fires) {
         if (player.x === fire.x && player.y === fire.y) {
           player.isAlive = false;
+          player.deathTime = Date.now();
           board[player.y][player.x] = tileTypes.empty;
           console.log(player.name + " died");
         }

@@ -27,9 +27,9 @@ export const tileTypes = {
 
 const spawnPoints = [
   { nr: 1, x: 0, y: 0 },
-  { nr: 2, x: BOARD_SIZE - 1, y: 0 },
-  { nr: 3, x: 0, y: BOARD_SIZE - 1 },
-  { nr: 4, x: BOARD_SIZE - 1, y: BOARD_SIZE - 1 },
+  { nr: 2, x: BOARD_SIZE - 1, y: BOARD_SIZE - 1 },
+  { nr: 3, x: BOARD_SIZE - 1, y: 0 },
+  { nr: 4, x: 0, y: BOARD_SIZE - 1 },
 ];
 
 export const actions = {

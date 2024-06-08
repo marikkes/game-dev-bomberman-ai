@@ -2,7 +2,7 @@
 
 This is a simple implementation of the game bomberman / playing with fire intended for AI-coding challenges.
 
-Add your AI-ocde to a file in the [ais](public/ais) directory. See the [template](public/ais/template.js) for the basic structure. The only two requirements to the AI-code is that it has function `makeAi(id)` that returns an object with a get_action function and that it only uses imports from [the info gate](public/ai-info-gate.js).
+Add your AI-code to a file in the [ais](public/ais) directory. See the [template](public/ais/template.js) for the basic structure. The only two requirements to the AI-code is that it has function `makeAi(id)` that returns an object with a get_action function and that it only uses imports from [the info gate](public/ai-info-gate.js).
 
 
 ### Local installation

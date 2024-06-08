@@ -15,5 +15,5 @@ export function makeAi(id) {
 // Returns the AI-s chosen action. For legal actions see the list of possible actions.
 // Use methods from ai-info-gate.js to get information about the game state.
 function get_action() {
-    
+    // your code goes here
 }

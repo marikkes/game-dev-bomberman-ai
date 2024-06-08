@@ -9,12 +9,12 @@ const TIME_PER_UPDATE = 160;
 var last = Date.now();
 var lag = 0;
 setUp();
-function loop(time) {
+async function loop(time) {
     let current = Date.now();
     lag+=current-last;
     last=current;
     while(lag>=TIME_PER_UPDATE) {
-        getAiActions();
+        await getAiActions();
         resolveActions();
         lag-=TIME_PER_UPDATE;
     }

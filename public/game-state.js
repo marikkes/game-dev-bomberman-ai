@@ -7,6 +7,7 @@ const TIME_TO_EXPLODE = 3000;
 const BOARD_ROW_COUNT = BOARD_SIZE;
 const BOARD_COL_COUNT = BOARD_SIZE;
 const DEFAULT_BLAST_RANGE = 3;
+const DECISION_TIMEOUT = 1000;
 
 var board = [];
 var players = [];
@@ -186,12 +187,30 @@ function resolveDeath() {
   }
 }
 
-export function getAiActions() {
+export async function getAiActions() {
+    let promises = [];
   for (let player of players) {
     if (!player.isHuman && player.isAlive && isGametime) {
-      queueAction(player.id, player.agent.get_action());
+      const actionPromise = new Promise((resolve) => {
+        return resolve(player.agent.get_action());
+      });
+      const decisionTimeout = new Promise((resolve, reject) =>
+        setTimeout(reject, DECISION_TIMEOUT)
+      );
+      const getActionPromise = Promise.race([actionPromise, decisionTimeout])
+        .then((action) => {
+          queueAction(player.id, action);
+        })
+        .catch(() => {
+          console.log(player.name + " timed out");
+          player.isAlive = false;
+          player.deathTime = Date.now();
+          board[player.y][player.x] = tileTypes.empty;
+        });
+        promises.push(getActionPromise);
     }
   }
+  await Promise.all(promises);
 }
 
 function importAi(name, id) {

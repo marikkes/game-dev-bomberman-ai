@@ -27,6 +27,7 @@ function initReset() {
   document.querySelector("#reset").addEventListener("click", () => {
     initBoard();
     resetAgents();
+    document.querySelector("#player").disabled = false;
     document.querySelector("#startStop").innerHTML = "Start";
     isGametime = false;
     resetBombsNFires();
@@ -34,9 +35,10 @@ function initReset() {
 }
 
 function initPlayerButton() {
-  document.querySelector("#player").innerHTML = "Add player";
+  document.querySelector("#player").innerHTML = "Add human";
   document.querySelector("#player").addEventListener("click", () => {
     addPlayer(true);
+    document.querySelector("#player").disabled = true;
   });
 }
 

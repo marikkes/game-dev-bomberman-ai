@@ -13,3 +13,9 @@ Add your AI-code to a file in the [ais](public/ais) directory. See the [template
 3. ```npm install```
 4. ```npm start```
 5. See the game at http://localhost:3000
+
+### Participation
+
+------------
+1. During a competition, fork the [project](https://github.com/Ivarafa/game-dev-bomberman-ai) and clone your fork.
+2. Follow the steps above to run the game and create your AI. Then push your AI and create a pull request towards the tournament branch in the original repo.

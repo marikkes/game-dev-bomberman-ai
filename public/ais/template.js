@@ -32,7 +32,7 @@ function get_action() {
   const players = getPlayersInfo();
   const tileTypes = getTileTypesInfo();
 
-  // your code goes here
+  // your code goes here, look at the functions below and the other ais for inspiration
 }
 
 //Examples of functions that could be useful, feel free to change them to suit your own needs or make something

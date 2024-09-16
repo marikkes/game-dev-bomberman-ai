@@ -16,6 +16,8 @@ function get_action() {
   const fire = getFiresInfo();
   const players = getPlayersInfo();
   const tileTypes = getTileTypesInfo();
+  const myAi = players.find((p) => p.id === my_id);
+
   // return random action
   const r = Math.floor(Math.random() * 5);
   switch (r) {

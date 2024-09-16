@@ -8,7 +8,7 @@ Add your AI-code to a file in the [ais](public/ais) directory. See the [template
 ### Local installation
 
 ------------
-1. Clone this repository: ```git clone https://github.com/Ivarafa/game-dev-bomberman-ai.git```
+1. Clone this repository: ```git clone [https://github.com/Ivarafa/game-dev-bomberman-ai.git](https://github.com/marikkes/game-dev-bomberman-ai.git)```
 2. ```cd game-dev-bomberman-ai```
 3. ```npm install```
 4. ```npm start```
